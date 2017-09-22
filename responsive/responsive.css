@@ -1,0 +1,73 @@
+/* responsive.css
+ * Lab 4, Comp20
+ * 9/22/2017
+ */
+
+ .garfield {
+	 background-image: url("garfield.gif");
+	 width: 600px;
+	 height: 398px;
+ }
+ 
+ @media only screen and (min-width: 1201px) {
+	.garfield {
+		width: 400px;
+		height: 132.7px;
+	}
+ }
+ 
+ @media only screen and (min-width: 1101px) and (max-width: 1200px) {
+	 .garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: -400px 0px;
+	 }
+ }
+ 
+ @media only screen and (min-width: 1001px) and (max-width: 1100px) {
+	 .garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: 0px -132.7px;		 
+	 }
+ }
+ 
+ @media only screen and (min-width: 901px) and (max-width: 1000px) {
+	 .garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: -200px -132.7px;		 
+	 }
+ }
+ 
+ @media only screen and (min-width: 801px) and (max-width: 900px) {
+	.garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: -400px -132.7px;			 
+	 }
+ }
+ 
+ @media only screen and (min-width: 701px) and (max-width: 800px) {
+	 .garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: 0px -265.4px;			 
+	 }
+ }
+ 
+ @media only screen and (min-width: 601px) and (max-width: 700px) {
+	 .garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: -200px -265.4px;			 
+	 }
+ }
+ 
+ @media only screen and (max-width: 600px) {
+	 .garfield {
+		 width: 200px;
+		 height: 132.5px;
+		 background-position: -400px -265.4px;			 
+	 }
+ }
