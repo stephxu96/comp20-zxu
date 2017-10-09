@@ -1,0 +1,18 @@
+/* style.css
+ * Comp 20, Lab 5
+ * Zhaoying Xu
+ */
+ 
+ h1 {
+	text-align: center; }
+ 
+ .center {
+	 margin-left: auto;
+	 margin-right: auto;
+	 display: block;
+ }
+ 
+ #lyrics {
+	margin-top: 10px;
+	text-align: center;
+ }
