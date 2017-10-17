@@ -3,12 +3,164 @@
 <head>
 	<meta charset="utf-8" />
 	<title>landmarks</title>
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+	<link rel="stylesheet" href="landmarks_style.css" />
+	<script>
+		var myLat = 0;
+		var myLng = 0;
+		var request = new XMLHttpRequest();
+		var loc = null; // Object for all locations 
+		var me = new google.maps.LatLng(myLat, myLng);
+		var myLogin = "CBEplmXx";
+		var myOptions = {
+			zoom: 13, // The larger the zoom number, the bigger the zoom
+			center: me,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		};
+		var map;
+		var infowindow = new google.maps.InfoWindow();
+		var marker;
+		var post_url = 'https://defense-in-derpth.herokuapp.com/sendLocation';
+
+		function init()
+		{
+			map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+			draggable: true;
+			getMyLocation();
+		}
+
+		function getMyLocation() 
+		{
+			if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
+				navigator.geolocation.getCurrentPosition(function(position) {
+					myLat = position.coords.latitude;
+					myLng = position.coords.longitude;
+					postLocations();
+				});
+			}
+			else {
+				alert("Geolocation is not supported by your web browser.  What a shame!");
+			}
+		}
+
+		function postLocations()
+		{
+			var params = "login=" + myLogin + "&lat=" + myLat + "&lng=" + myLng;
+			request.open('POST', post_url, true);
+			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			request.onreadystatechange = function() {
+				if (request.readyState == 4 && request.status == 200) {
+					data = request.responseText;
+					loc = JSON.parse(data);
+					if (loc != null) {
+						updateLocations();
+					}
+				}
+			};
+			request.send(params);
+		}
+		
+		function updateLocations() 
+		{
+			update_me();
+			update_class();
+			//update_landmark();
+		}
+		
+		/* First update my location */
+		function update_me() {
+			me = new google.maps.LatLng(myLat, myLng);
+			// Update map and go there...
+			map.panTo(me);
+			marker = new google.maps.Marker({
+				position: me,
+				title: "This is me!",
+				map: map
+			});
+			// Open info window on click of marker
+			google.maps.event.addListener(marker, 'click', (function(marker) {
+				return function() {
+					infowindow.setContent(marker.title);
+					infowindow.open(map, marker);
+				}
+			})(marker));
+		}
+		
+		/* Then update other people's locations */
+		function update_class() {
+			var login;
+			var lat;
+			var lng;
+			var param;
+			var people = loc['people'];
+			
+			for (var i = 0; i < people.length; i++) {
+				person_in_class = people[i];
+				login = person_in_class['login'];
+				if (login != myLogin) {
+					lat = person_in_class['lat'];
+					lng = person_in_class['lng'];
+					marker = new google.maps.Marker({
+						position: new google.maps.LatLng(lat, lng),
+						title: login,
+						icon: {
+							path: google.maps.SymbolPath.CIRCLE,
+							scale: 10
+						},
+						map: map
+					});
+
+					google.maps.event.addListener(marker, 'click', (function(marker) {
+						return function() {
+							infowindow.setContent(marker.title);
+							infowindow.open(map, marker);
+						}
+					})(marker));
+				}
+			}
+		}
+		
+		function update_landmark() {
+			var location_name;
+			var lat;
+			var lng;
+			var param;
+			var max_dist = 1;
+			var distance = 10;
+			var landmarks = loc['landmarks'];
+			var icon_base = "https://maps.google.com/mapfiles/kml/shapes/";
+			for (var i = 0; i < landmarks.length; i++) {
+				landmark = landmarks[i];
+				if (distance <= max_dist) {
+					location_name = landmark["properties"]["Location_Name"]
+					lat = landmark["geometry"]["coordinates"][0];
+					lng = landmark["geometry"]["coordinates"][1];
+					marker = new google.maps.Marker({
+						position: new google.maps.LatLng(lat, lng),
+						title: location_name,
+						icon: icon_base + "landmark.png",
+						map: map
+					});
+
+					google.maps.event.addListener(marker, 'click', (function(marker) {
+						return function() {
+							infowindow.setContent(marker.title);
+							infowindow.open(map, marker);
+						}
+					})(marker));
+				}
+			}
+		}
+		
+		function calculate_distance(obj_lat, obj_lng){
+		}
+	</script>
 </head>
 
-<BODY>
-	<script>
-
-	</script>
+<BODY onload='init()'>
+	<div id="map_canvas"></div>
 </BODY>
 
 </html>
+
