@@ -116,7 +116,13 @@
 			var min_dist = -1;
 			var min_loc;
 			var landmarks = loc['landmarks'];
-			var icon_base = "https://maps.google.com/mapfiles/kml/shapes/";
+			var icon = {
+				//url: 'https://cdn3.iconfinder.com/data/icons/landmark-vol-2/512/11_National_Monument-512.png',
+				url: 'landmark.png',
+				scaledSize: new google.maps.Size(35, 35),
+				origin: new google.maps.Point(0, 0),
+				anchor: new google.maps.Point(0, 0)
+			};
 			for (var i = 0; i < landmarks.length; i++) {
 				landmark = landmarks[i];
 				lat = landmark["geometry"]["coordinates"][1];
@@ -132,7 +138,7 @@
 					marker = new google.maps.Marker({
 						position: new google.maps.LatLng(lat, lng),
 						title: details,
-						icon: icon_base + "landmark.png",
+						icon: icon,
 						map: map
 					});
 
