@@ -115,11 +115,12 @@
 			var max_dist = 1;
 			var min_dist = -1;
 			var min_loc;
+			var min_lat;
+			var min_lng;
 			var landmarks = loc['landmarks'];
 			var icon = {
-				//url: 'https://cdn3.iconfinder.com/data/icons/landmark-vol-2/512/11_National_Monument-512.png',
 				url: 'landmark.png',
-				scaledSize: new google.maps.Size(35, 35),
+				scaledSize: new google.maps.Size(30, 30),
 				origin: new google.maps.Point(0, 0),
 				anchor: new google.maps.Point(0, 0)
 			};
@@ -132,6 +133,8 @@
 				if (min_dist == -1 || distance < min_dist) {
 					min_dist = distance;
 					min_loc = loc_name;
+					min_lat = lat;
+					min_lng = lng;
 				}
 				if (distance <= max_dist) {
 					details = landmark["properties"]["Details"]
@@ -151,11 +154,11 @@
 				}
 			}
 			// After getting the nearest historical landmark, update my marker
-			update_me(min_loc, min_dist);
+			update_me(min_loc, min_dist, min_lat, min_lng);
 		}
 		
 		/* Update my location */
-		function update_me(min_loc, min_dist) {
+		function update_me(min_loc, min_dist, min_lat, min_lng) {
 			me = new google.maps.LatLng(myLat, myLng);
 			// Update map and go there...
 			map.panTo(me);
@@ -171,7 +174,26 @@
 					infowindow.open(map, marker);
 				}
 			})(marker));
+			
+			var me_to_landmark = [
+				{lat: myLat, lng: myLng},
+				{lat: min_lat, lng: min_lng}
+			];
+			render_polyline(me_to_landmark);
 		}
+		
+		// Render a polyline between two coordinates
+		function render_polyline(coordinates) {
+			var path = new google.maps.Polyline({
+				path: coordinates,
+				geodesic: true,
+				strokeColor: '#FF0000',
+				strokeOpacity: 1.0,
+				strokeWeight: 3
+			});
+			path.setMap(map);
+		}
+		
 		
 		// Defines a toRad function to numbers
 		Number.prototype.toRad = function() {
