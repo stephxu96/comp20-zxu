@@ -22,7 +22,8 @@
 		var infowindow = new google.maps.InfoWindow();
 		var marker;
 		var post_url = 'https://defense-in-derpth.herokuapp.com/sendLocation';
-
+		var distance;
+		
 		function init()
 		{
 			map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
@@ -63,31 +64,13 @@
 		
 		function updateLocations() 
 		{
-			update_me();
-			update_class();
-			//update_landmark();
+			if (myLat != 0 && myLng != 0) {
+				update_class();
+				update_landmark();
+			}
 		}
 		
-		/* First update my location */
-		function update_me() {
-			me = new google.maps.LatLng(myLat, myLng);
-			// Update map and go there...
-			map.panTo(me);
-			marker = new google.maps.Marker({
-				position: me,
-				title: "This is me!",
-				map: map
-			});
-			// Open info window on click of marker
-			google.maps.event.addListener(marker, 'click', (function(marker) {
-				return function() {
-					infowindow.setContent(marker.title);
-					infowindow.open(map, marker);
-				}
-			})(marker));
-		}
-		
-		/* Then update other people's locations */
+		/* Update other people's locations */
 		function update_class() {
 			var login;
 			var lat;
@@ -101,9 +84,10 @@
 				if (login != myLogin) {
 					lat = person_in_class['lat'];
 					lng = person_in_class['lng'];
+					distance = calculate_distance(lat, lng)
 					marker = new google.maps.Marker({
 						position: new google.maps.LatLng(lat, lng),
-						title: login,
+						title: login + '<br>' + distance + ' miles away',
 						icon: {
 							path: google.maps.SymbolPath.CIRCLE,
 							scale: 10
@@ -121,24 +105,33 @@
 			}
 		}
 		
+		// Selectively update landmarks
 		function update_landmark() {
-			var location_name;
+			var loc_name;
+			var details;
 			var lat;
 			var lng;
 			var param;
 			var max_dist = 1;
-			var distance = 10;
+			var min_dist = -1;
+			var min_loc;
 			var landmarks = loc['landmarks'];
 			var icon_base = "https://maps.google.com/mapfiles/kml/shapes/";
 			for (var i = 0; i < landmarks.length; i++) {
 				landmark = landmarks[i];
+				lat = landmark["geometry"]["coordinates"][1];
+				lng = landmark["geometry"]["coordinates"][0];
+				loc_name = landmark["properties"]["Location_Name"];
+				distance = calculate_distance(lat, lng);
+				if (min_dist == -1 || distance < min_dist) {
+					min_dist = distance;
+					min_loc = loc_name;
+				}
 				if (distance <= max_dist) {
-					location_name = landmark["properties"]["Location_Name"]
-					lat = landmark["geometry"]["coordinates"][0];
-					lng = landmark["geometry"]["coordinates"][1];
+					details = landmark["properties"]["Details"]
 					marker = new google.maps.Marker({
 						position: new google.maps.LatLng(lat, lng),
-						title: location_name,
+						title: details,
 						icon: icon_base + "landmark.png",
 						map: map
 					});
@@ -151,10 +144,47 @@
 					})(marker));
 				}
 			}
+			// After getting the nearest historical landmark, update my marker
+			update_me(min_loc, min_dist);
+		}
+		
+		/* Update my location */
+		function update_me(min_loc, min_dist) {
+			me = new google.maps.LatLng(myLat, myLng);
+			// Update map and go there...
+			map.panTo(me);
+			marker = new google.maps.Marker({
+				position: me,
+				title: min_loc + "<br>" + min_dist + " miles away",
+				map: map
+			});
+			// Open info window on click of marker
+			google.maps.event.addListener(marker, 'click', (function(marker) {
+				return function() {
+					infowindow.setContent(marker.title);
+					infowindow.open(map, marker);
+				}
+			})(marker));
+		}
+		
+		// Defines a toRad function to numbers
+		Number.prototype.toRad = function() {
+			return this * Math.PI / 180;
 		}
 		
 		function calculate_distance(obj_lat, obj_lng){
+			var R = 6371; //km
+			d1 = myLat - obj_lat;
+			dLat = d1.toRad();
+			d2 = myLng - obj_lng;
+			dLng = d2.toRad();
+			var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+				Math.cos(myLat.toRad()) * Math.cos(obj_lat.toRad()) *
+				Math.sin(dLng/2) * Math.sin(dLng/2);
+			var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+			return R * c;
 		}
+		
 	</script>
 </head>
 
