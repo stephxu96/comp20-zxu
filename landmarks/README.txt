@@ -10,3 +10,5 @@ JavaScript for Haversine Formula taken from: https://stackoverflow.com/questions
 Icon for landmark taken from: https://cdn3.iconfinder.com/data/icons/landmark-vol-2/512/11_National_Monument-512.png'
 
 3. I've spent approximately 6-7 hours in completing this assignment.
+
+ 
