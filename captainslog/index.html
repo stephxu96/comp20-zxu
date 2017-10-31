@@ -10,39 +10,38 @@
     <script>
 		var days = ["Mon ", "Tue ", "Wed ", "Thu ", "Fri ", "Sat ", "Sun "];
 		var months = ["Jan ", "Feb ", "Mar ", "Apr ", "May ", "Jun ", "Jul ", "Aug ", "Sep ", "Oct ", "Nov ", "Dec "];
-		var day, month, date, hour, min, sec, year, value;		
+		var day, month, date, hour, min, sec, year, value;	
+		var storage_string = "log_info";
+		var log_record = new Array();
 		function reload() {
-			elem = document.getElementById("log");
-			output = "";
-			for (key in localStorage) {
-				var myDate = new Date(key);
-				day = myDate.getDay();
-				month = myDate.getMonth();
-				date = myDate.getDate();
-				hour = myDate.getHours();
-				min = myDate.getMinutes();
-				sec = myDate.getSeconds();
-				year = myDate.getFullYear();
-				
-				value = localStorage[key]
-				
-				output = "<p>" + days[day] + months[month] + date + " " + hour + ":" + min + ":" + sec + " " + year + " - " + value + "</p>\n" + output;
-			}
-			$( "#log" ).html(output);
+			$( "#msg" ).val('');
+			$( "#log" ).html(localStorage[storage_string]);
 		}
 		
 		function store() {
-			text = document.getElementById("msg").value;
 			myDate = new Date();
 			myDate.getTime();
-			localStorage[myDate.toString()] = text;
+			output = localStorage[storage_string];
+			day = myDate.getDay();
+			month = myDate.getMonth();
+			date = myDate.getDate();
+			hour = myDate.getHours();
+			min = myDate.getMinutes();
+			sec = myDate.getSeconds();
+			year = myDate.getFullYear();		
+
+			text = document.getElementById("msg").value;
+			output = "<p>" + days[day] + months[month] + date + " " + hour + ":" + min + ":" + sec + " " + year + " - " + text + "</p>\n" + output;
+			localStorage[storage_string] = output;
 			reload();
 		}
 		
         $ ( document ).ready(function(){
+			if (!storage_string in localStorage) {
+				localStorage[storage_string] = "";
+			}
 			$( "#msg" ).on('keypress', function(e){
 				if (e.which === 13) {
-					$( "msg" ).val('');
 					store();		
 				}
 			});
