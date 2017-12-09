@@ -56,7 +56,7 @@
 		<br>
 
 		<h3>3. Invalid google map Lat/Lng parameters</h3>
-		<p><h4>Location of issue:</h4>When a POST request is sent to /sendLocation with latitude and longitude parameters out of google map bound.</p>
+		<p><h4>Location of issue:</h4>When a POST request is sent to '/sendLocation' with latitude and longitude parameters out of google map bound.</p>
 		<p><h4>Severity: Low</h4>This issue causes inefficient use of database space. If an attacker posts an exponential amount of out of bound data, this could significantly slow down the speed of the app.</p>
 		<p>
 			<h4>What the issue is:</h4>As defined by the Google Map API, the bounds for Latitude and Longitude parameters for creating a marker is as follows: 
@@ -65,7 +65,7 @@
 		<p>Longitude: -180 to +180</p> 
 		<p>In the server side implementation, the lat and lng parameters are only verified to be numbers, but their ranges are left unchecked. While this data is passed onto client side to be displayed on the google map, the marker will not make an appearance as it is not a valid coordinate on Earth. However, any data of this form will still be inserted into the database and take up unnecessary space or force the database to hit its memory limit. 
 		<br>
-		<p><h4>Demonstration and screen shot of vulnerability:</h4>I used a shell script to insert ~4,121 rows into the database with coorindates that are out of bounds, using a 5-year-old mac in less than half an hour. All these rows will be sent to the client side once queried, whereas only ~60 of them will be placed on the map</p>
+		<p><h4>Demonstration and screen shot of vulnerability:</h4>I used a shell script to insert 4,121 rows into the database with coorindates that are out of bounds, using a 5-year-old mac in under half an hour. All these rows will be sent to the client side once queried, whereas only ~60 of them will be placed on the map</p>
 		<img src='issue3.png' />
 		<p><h4>Resolution:</h4>Check bounds according to the definition provided above</p>
 		<p>Example fix: </p>
