@@ -25,7 +25,7 @@
 			</ol>
 		</p>
 		<li><h2>Abstract of Findings</h2></li>
-			A total of three findings are provided in this document: <br>1) Malicious scripts can be inserted into the database, retrived later by the user and executed when the users enter the main page of your product. <br>2) Attacker has the ability to retrieve all information in the database with a GET request, which otherwise should not be disclosed using the said method. <br>3) The validity of data sent by the clients to the database is not fully checked, thus giving attackers chances to destroy the efficiency of the product by posting useless data and storing them in the database. <br>
+			A total of three findings are provided in this document: <br>1) Malicious scripts can be inserted into the database, retrived later by the user and executed when people use the product. <br>2) Attacker has the ability to retrieve all information in the database with a GET request, which otherwise should not be disclosed using the said method. <br>3) The validity of data sent by the clients to the database is not fully checked, thus giving attackers chances to destroy the efficiency of the product by posting useless data and storing them in the database. <br>
 		<li><h2>Issues found</h2></li>
 		<h3>1. Cross-site Scripting (XSS)</h3>
 		<p><h4>Location of issue:</h4>home page, where all the checkin information are displayed </p>
