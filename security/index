@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Security</title>
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="stylesheet" href="security.css" />
+</head>
+<BODY>
+	<h1>Security: By Steph Xu</h1>
+	<ul>
+		<li><h2>Introduction</h2></li>
+		<p>
+			Historic Landmarks is a web application developed to provide location service for historical landmarks. The product is designed to detect the location of a user, and display information about 1) landmarks within a certain distance, detailed description of landmarks, and 2) the locations of people using this application. Other functions of this application including checking all login locations and times, and retrieving all login infomration of a login name.
+		</p>
+		<p>
+			Due to concerns about the security and privacy of this product, I was hired to do a security assessment, with the goal of locating any underlying concerns that might affect the product or clients of the product. In the sections below, I will discuss three security vulnerabilities and their consequences. 
+		</p>
+		<li><h2>Methodology</h2></li>
+		<p>
+			Tools: <br>
+			<ol>
+				<li>cURL, a command-line tool for transferring data with URLS. Used to send post requests.</li>
+				<li>Google Chrome browswer for sending GET requests.</li>
+			</ol>
+		</p>
+		<li><h2>Abstract of Findings</h2></li>
+			A total of three findings are provided in this document: <br>1) Malicious scripts can be inserted into the database, retrived later by the user and executed when the users enter the main page of your product. <br>2) Attacker has the ability to retrieve all information in the database with a GET request, which otherwise should not be disclosed using the said method. <br>3) The validity of data sent by the clients to the database is not fully checked, thus giving attackers chances to destroy the efficiency of the product by posting useless data and storing them in the database. <br>
+		<li><h2>Issues found</h2></li>
+		<h3>1. Cross-site Scripting (XSS)</h3>
+		<p><h4>Location of issue:</h4>home page, where all the checkin information are displayed </p>
+		<p><h4>Severity: High</h4>Any kind of malicious scripts could be inserted to the database and executed when the home page '/' is accessed. The consequence include involuntarily a pop-up window with malicious website, embedding an iframe (evil web page) layered on top of the homepage, which is involved in click-jacking, and initialiting download for a computer virus, etc.</p>
+		<p><h4>What the issue is:</h4> Through a post request to '/sendLocation', data is inserted into the server database with a login name and lat/lng coordinates. While the lat/lng coordinates are verified to be numbers, the login name can be in any possible format, including a client-side scripting language. While a user enter the home page, all the login names are retrieved from the database and rendered as a part of a html documents, and the injected script is automatedly executed if any.</p>
+		<p><h4>Demonstration and screen shot of vulnerability:</h4> </p>
+		<p>Enter from command line: <br>curl --data "login=&ltscript&gtwindow.alert('Herro')&lt/script&gt&lat=42.38&lng=-71.13722" https://obscure-castle-76948.herokuapp.com/sendLocation<br>curl --data "login=&ltscript&gtwindow.open('http://money.cnn.com/2017/12/08/news/economy/red-flags-gop-tax-bills/index.html')&lt/script&gt&lat=42.38&lng=-71.13722" https://obscure-castle-76948.herokuapp.com/sendLocation</p>
+		<p>Screenshot 1:</p>
+		<img src='issue1.png' />
+		<p>Screenshot 2:</p>
+		<img src='issue1_2.png' />
+		<p><h4>Resolution:</h4>Upon receiving POST request body, escape characters with HTML entity encoding, i.e. & &nbsp --> &nbsp &ampamp, < &nbsp --> &nbsp &amplt, > &nbsp --> &nbsp &ampgt, " &nbsp --> &nbsp &ampquot, ' &nbsp --> &nbsp &amp#x27, / &nbsp --> &nbsp &amp#x2F.</p>
+		<br>
+
+		<h3>2. Database Injection</h3>
+		<p><h4>Location of issue:</h4>When a get request is sent to '/checkins.json?login=login_name'. </p>
+		<p><h4>Severity: Middle</h4>This can be a serious issue when the database contains confidential information of clients, such as bank account, username/passwords, real life information, etc. However, considering that this product gives out all the logins (which are not real names) and checkin locations anyways on the index page, the database does not contain anything that has high security concerns, thus not a serious issue. </p>
+		<p><h4>What the issue is:</h4>Database injection can happen when the query string is manipuated such that a mongodb query filter is applied. <br><br>Since the application is built with ExpressJS, the handler does not verify whether the query is a string (a 'real' login name) or not. This vulnerability can be used in combination with the qs model syntax (as demonstrated below) to create a JavaScript object that maps to 'undefined' as the login query, which is interpreted by the mongodb as a query format. <br><br>In the example that follows, what's going on behind the scene is that the server is calling db.collection.find({"login": {"$gt": undefined}}). In this case, when the key of the JavaScript object is a mongodb query operator, such as '$gt' and '$lt', all logins in the database will be compared to 'undefined', and all results that return true will be returned as a part of the response. </p>
+		<p><h4>Demonstration and screen shot of vulnerability:</h4> </p>
+		<p>
+			Enter in the browser: http://localhost:8888/checkins.json?login[$gt]=<br>
+			Returned information: all rows in the database, versus the designed behavior where only rows with a specific queried login. 
+		</p>
+		<img src='issue2.png' />
+		<p><h4>Resolution:</h4>In this simple case, we can use a JSON parser to verify whether the query stirng is a login string or a string encoded JavaScript Object.</p>
+		<p>check_login = JSON.parse(theLogin);</p>
+		<p>if (typeof check_login == 'object') { \* handle error *\}</p>
+		<br>
+
+		<h3>3. Invalid google map Lat/Lng parameters</h3>
+		<p><h4>Location of issue:</h4>When a POST request is sent to /sendLocation with latitude and longitude parameters out of google map bound.</p>
+		<p><h4>Severity: Low</h4>This issue causes inefficient use of database space. If an attacker posts an exponential amount of out of bound data, this could significantly slow down the speed of the app.</p>
+		<p>
+			<h4>What the issue is:</h4>As defined by the Google Map API, the bounds for Latitude and Longitude parameters for creating a marker is as follows: 
+		</p>
+		<p>Latitude: -85.015115 to + 85</p>
+		<p>Longitude: -180 to +180</p> 
+		<p>In the server side implementation, the lat and lng parameters are only verified to be numbers, but their ranges are left unchecked. While this data is passed onto client side to be displayed on the google map, the marker will not make an appearance as it is not a valid coordinate on Earth. However, any data of this form will still be inserted into the database and take up unnecessary space or force the database to hit its memory limit. 
+		<br>
+		<p><h4>Demonstration and screen shot of vulnerability:</h4>I used a shell script to insert ~4,121 rows into the database with coorindates that are out of bounds, using a 5-year-old mac in less than half an hour. All these rows will be sent to the client side once queried, whereas only ~60 of them will be placed on the map</p>
+		<img src='issue3.png' />
+		<p><h4>Resolution:</h4>Check bounds according to the definition provided above</p>
+		<p>Example fix: </p>
+		<p>	if (theLogin == null || theLat == null || theLng == null || latbool == true || lngbool == true || theLat >= 85 || theLat <= -85.015115 || theLng <= -180 || theLat >= 180) { <br>
+		&nbsp&nbsp&nbsp&nbspresponse.send({"error":"Whoops, something is wrong with your data!"}); <br>}</p>
+		<br>
+
+
+		<li><h2>Conclusion</h2></li>
+		<p>The issues mentioned in this document conclude to one rule: do not trust client input. All forms of information taken from the user can be used to break the product or attack other users through the product interface. Additional checks should be applied to every piece of input possible such that they meet the requirements of the product and can be applied without secruity concerns.</p>
+		<li><h2>References</h2></li>
+		<p><a href='https://www.owasp.org/index.php/Clickjacking'>https://blog.websecurify.com/2014/08/hacking-nodejs-and-mongodb.html</a></p>
+		<p><a href='https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet'>https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet</a></p>
+		<p><a href='https://www.owasp.org/index.php/Clickjackings'>https://www.owasp.org/index.php/Clickjacking</a></p>
+		<p><a href='https://stackoverflow.com/questions/11849636/maximum-lat-and-long-bounds-for-the-world-google-maps-api-latlngbounds'>https://stackoverflow.com/questions/11849636/maximum-lat-and-long-bounds-for-the-world-google-maps-api-latlngbounds</a></p>
+		<p><a href='https://www.w3schools.com/js/js_json_parse.asp'>https://www.w3schools.com/js/js_json_parse.asp</a></p>
+	</ul>
+</BODY>
+</html>
